@@ -1,0 +1,21 @@
+Has-topic
+has-wikidata-code
+has-CRPD-Text
+has-wikidata-definition
+has-wikidata-definition-extension
+Has-subtopic
+Mentioned-In-CRPD-Article
+Requires
+Prohibits
+Complies With
+Has-SubTopic
+Avoids
+Is
+Should-be-in
+Shall-be
+Has-wikidata-definition
+Requires-wikidata-definition-extension
+Has-CRPD-definition
+Requires-wikidata-definition
+
+#docker-compose down --volumes
