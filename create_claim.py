@@ -71,19 +71,88 @@ def searchWikiItemSparql(label):
     else:
         return False
 
+wikidata_code_property_id=None
+def getWikiDataItemtifier():
+    query = """
+    select ?wikicode
+    {
+                      ?wikicode rdfs:label ?plabel .
+                      FILTER(?plabel = 'Wikidata QID'@en) .
+                      FILTER(lang(?plabel)='fr' || lang(?plabel)='en')
+                    }
+                    limit 1
+
+    
+    """
+    sparql.setQuery(query)
+    sparql.setReturnFormat(JSON)
+    results = sparql.query().convert()
+    # for result in results['results']['bindings']:
+    #     print(result)
+    if (len(results['results']['bindings']) > 0):
+        wikidata_code_property_id = results['results']['bindings'][0]['s']['value'].split("/")[-1]
+    return results
+
+
 #get items with sparql
 def getWikiItemSparql(label):
+    query=""
     # sparql = SPARQLWrapper("http://localhost:8989/bigdata/namespace/wdq/sparql")
-    query = """
-         select ?label ?s where
-                {
-                  ?s ?p ?o.
-                  ?s rdfs:label ?label .
-                  FILTER(lang(?label)='fr' || lang(?label)='en')
-                  FILTER(?label = '""" + label + """'@en)
-
-                }
-         """
+    # query = """
+    #      select ?label ?s where
+    #             {
+    #               ?s ?p ?o.
+    #               ?s rdfs:label ?label .
+    #               FILTER(lang(?label)='fr' || lang(?label)='en')
+    #               FILTER(?label = '""" + label + """'@en)
+    #
+    #             }
+    #      """
+    if(wikidata_code_property_id is not None) :
+        query = """
+             select ?label ?s  where
+                    {
+                      ?s ?p ?o.
+                      ?s rdfs:label ?label .
+                      FILTER NOT EXISTS {?s <http://wikibase.svc/prop/"""+wikidata_code_property_id+"""> []}
+                      FILTER(lang(?label)='fr' || lang(?label)='en')
+                      FILTER(?label = '""" + label + """'@en)
+                     
+                    }
+             """
+    else:
+        query = """
+             select ?label ?s where
+                    {
+                      ?s ?p ?o.
+                      ?s rdfs:label ?label .
+                      FILTER(lang(?label)='fr' || lang(?label)='en')
+                      FILTER(?label = '""" + label + """'@en)
+    
+                    }
+             """
+    #
+    # """
+    # select ?label ?s  ?pitem where
+    #         {
+    #           ?s ?p ?o.
+    #           ?s rdfs:label ?label .
+    #
+    #           {
+    #             select ?pitem{
+    #               ?pitem rdfs:label ?plabel .
+    #               FILTER(?plabel = 'Wikidata QID'@en) .
+    #               FILTER(lang(?plabel)='fr' || lang(?plabel)='en')
+    #             }
+    #             limit 1
+    #           }
+    #
+    #           FILTER(lang(?label)='fr' || lang(?label)='en')
+    #           FILTER(?label = 'equality'@en)
+    #           FILTER NOT EXISTS {?s ?pitem []}
+    #
+    #          }
+    # """
     sparql.setQuery(query)
     sparql.setReturnFormat(JSON)
     results = sparql.query().convert()
@@ -95,20 +164,44 @@ def getWikiItemSparql(label):
 def getItems():
     pid = "P31"
     params = {'action': 'wbgetentities', 'ids': pid}
-    equest = wikibase._simple_request(**params)
+    request = wikibase._simple_request(**params)
     result = request.query()
     print (result["entities"][pid]["descriptions"])
 
 def capitaliseFirstLetter(word):
-    new = list(word)
-    new[0] = word[0].upper()
-    captWord=''.join(new)
-    return captWord
+    # new = list(word)
+    # new[0] = word[0].upper()
+    # captWord=''.join(new)
+    return word.capitalize()
 
 def getClaim(item_id) :
     entity = pywikibot.ItemPage(wikibase_repo, item_id)
     claims = entity.get(u'claims')  # Get all the existing claims
     return claims
+
+#connect to wikidata
+wikidata = pywikibot.Site("wikidata", "wikidata")
+wikidata_repo = wikidata.data_repository()
+
+#import an item
+from util.util import changeItem, changeProperty, importProperty
+def importWikiDataConcept(qid):
+    arg = qid
+    wikidata_item = pywikibot.ItemPage(wikidata_repo, arg)
+    wikidata_item.get()
+    wikibase_item=changeItem(wikidata_item, wikibase_repo, True)
+    return wikidata_item;
+
+def linkWikidataItem(subject, qid):
+    data={}
+    wikidata_item=importWikiDataConcept(qid)
+    property=getWikiItemSparql('Has wikidata substitute item')
+    property.get();
+    claim = pywikibot.Claim(wikibase_repo, property.getID(), datatype=property.getType())
+    claim.setTarget(wikidata_item)
+    data['claims'] = claim.toJSON()
+    subject.editEntity(data)
+    return subject;
 
 def createClaim(subject_string, property_string, object_string, claims_hash) :
     # claims_hash={}
@@ -128,7 +221,7 @@ def createClaim(subject_string, property_string, object_string, claims_hash) :
     else :
         "CREATE SUBJECT"
     # GETTING PROPERTY ITEM
-    property_result = getWikiItemSparql(property_string.rstrip())
+    property_result = getWikiItemSparql(capitaliseFirstLetter(property_string).rstrip())
     property_item = {}
     property_id=None
     if (len(property_result['results']['bindings']) > 0):
@@ -139,9 +232,11 @@ def createClaim(subject_string, property_string, object_string, claims_hash) :
         print(property_item.getType(), property_item.getID())
     else :
         "CREATE PROPERTY"
+        return claims_hash
 
     # GETTING OBJECT ITEM
     object_item={}
+
     if(property_item.getType()==PropertyDataType.WikiItem.value):
         object_result = getWikiItemSparql(capitaliseFirstLetter(object_string).rstrip())
         if (len(object_result['results']['bindings']) > 0):
@@ -151,12 +246,12 @@ def createClaim(subject_string, property_string, object_string, claims_hash) :
             print( object_item.getID())
         else:
             "CREATE OBJECT"
-
+            return claims_hash
     elif(property_item.getType()==PropertyDataType.String.value):
         object_item=object_string
     elif (property_item.getType() == PropertyDataType.Quantity.value):
-        return claims_hash
         "NEEDS TO MODIFY THIS CASE"
+        return claims_hash
         # object_item = row[3].rstrip()
 
     # CREATE CLAIM AND EDIT SUBJECT ENTITY
@@ -179,11 +274,7 @@ def createClaim(subject_string, property_string, object_string, claims_hash) :
         existing_claims=getClaim(subject_id)
         if u''+property_id+'' in existing_claims[u'claims']:
             pywikibot.output(u'Error: Already claim is created')
-            return claims_hash;
-        # else:
-        #     stringclaim = pywikibot.Claim(repo, u'P2373')  # Else, add the value
-        #     stringclaim.setTarget('Kanye_west')
-        #     item.addClaim(stringclaim, summary=u'Adding a Genius artist ID')
+            return claims_hash
 
         print(f"inserting statement for {subject_string.rstrip()} ")
         claim = pywikibot.Claim(wikibase_repo, property_item.getID(), datatype=property_item.getType())
@@ -192,6 +283,12 @@ def createClaim(subject_string, property_string, object_string, claims_hash) :
         data['claims'] = newClaims
         subject_item.editEntity(data)
         claims_hash[subject_item.getID()]={property_item.getID(): {'value':object_item, 'datatype':property_item.getType()}}
+
+        # linking wikidata item with property Has wikidata substitute item
+        if (property_item.label() == "Has wikidata code"):
+            print("IMPORTING WIKIDATA ITEM")
+            linkWikidataItem(subject_item,object_item.rstrip())
+            print("DONE IMPORTING WIKIDATA ITEM")
         return claims_hash
     except:
         e = sys.exc_info()[0]
@@ -232,12 +329,14 @@ def test():
     print(config.get('wikibase', 'user'))
     test_item=pywikibot.ItemPage(wikibase_repo, "Q1")
     print(test_item)
-
-    test_item_sparql=getWikiItemSparql('Article 25')
+    claims=getClaim('Q73')
+    print(claims)
+    test_item_sparql=getWikiItemSparql('Has wikidata code')
     print(test_item_sparql)
 
 readFileAndProcess('data/Triplets-merged.csv')
 
+# test()
 exit()
 
 

@@ -11,8 +11,8 @@ from IdSparql import IdSparql
 from SPARQLWrapper import SPARQLWrapper, JSON
 # application config
 import configparser
-config = configparser.ConfigParser()
-config.read('config/application.config.ini')
+appConfig = configparser.ConfigParser()
+appConfig.read('config/application.config.ini')
 
 family = 'my'
 mylang = 'my'
@@ -23,21 +23,22 @@ config2.register_family_file(family, familyfile)
 config2.password_file = "user-password.py"
 # config2.usernames['my']['my'] = 'DG Regio'
 # config2.usernames['my']['my'] = 'WikibaseAdmin'
-config2.usernames['my']['my'] = config.get('wikibase','user')
+config2.usernames['my']['my'] = appConfig.get('wikibase','user')
 
 #connect to the wikibase
 wikibase = pywikibot.Site("my", "my")
 wikibase_repo = wikibase.data_repository()
 
 
-sparql = SPARQLWrapper(config.get('wikibase','sparqlEndPoint'))
+sparql = SPARQLWrapper(appConfig.get('wikibase','sparqlEndPoint'))
 site = pywikibot.Site()
 
 def capitaliseFirstLetter(word):
-    new = list(word)
-    new[0] = word[0].upper()
-    captWord=''.join(new)
-    return captWord
+    # new = list(word)
+    # new[0] = word[0].upper()
+    # captWord=''.join(new)
+    return word.capitalize().rstrip()
+
 #get items with sparql
 def getWikiItemSparql(label):
     # sparql = SPARQLWrapper("http://localhost:8989/bigdata/namespace/wdq/sparql")
@@ -109,30 +110,33 @@ def createProperty(label, description,datatype, property_map):
        return property_map;
 
 #Reading CSV
-with open('data/Predicates.csv') as csv_file:
-    csv_reader = csv.reader(csv_file, delimiter=',')
-    line_count = 0
-    property_map={}
-    for row in csv_reader:
-        print(f'Processing line number of {line_count}.')
-        if line_count ==0:
-            print(f'Column Headings are {", ".join(row)}')
-            line_count += 1
-        else:
-            if not row[2] :
-                description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
-                label = capitaliseFirstLetter(row[0]).rstrip()
-                datatype = row[1]
-                property_map= createProperty(label,description,datatype,property_map)
+def readFileAndProcess():
+    with open('data/Predicates.csv') as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        property_map={}
+        for row in csv_reader:
+            print(f'Processing line number of {line_count}.')
+            if line_count ==0:
+                print(f'Column Headings are {", ".join(row)}')
+                line_count += 1
+            else:
+                if not row[2] :
+                    description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
+                    label = capitaliseFirstLetter(row[0]).rstrip()
+                    datatype = row[1]
+                    property_map= createProperty(label,description,datatype,property_map)
 
-            else :
-                description=capitaliseFirstLetter(row[2]).rstrip()
-                label = capitaliseFirstLetter(row[0]).rstrip()
-                datatype= row[1]
-                property_map = createProperty(label, description, datatype, property_map)
+                else :
+                    description=capitaliseFirstLetter(row[2]).rstrip()
+                    label = capitaliseFirstLetter(row[0]).rstrip()
+                    datatype= row[1]
+                    property_map = createProperty(label, description, datatype, property_map)
 
 
-            line_count += 1
-    print(f'Completed Creating Properties total of {line_count}.')
+                line_count += 1
+        print(f'Completed Creating Properties total of {line_count}.')
+
+readFileAndProcess();
 
 exit()
