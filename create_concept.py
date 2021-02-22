@@ -177,7 +177,7 @@ def readFileAndProcessV2() :
 
 def readFileAndProcessV3() :
     entity_list={}
-    with open('data/Concepts.csv') as csv_file:
+    with open('data/Triplets-merged.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
@@ -207,5 +207,5 @@ def test():
     isExist=searchWikiItemSparql('Human Rights')
     print(isExist)
 
-test()
+readFileAndProcessV3()
 exit()

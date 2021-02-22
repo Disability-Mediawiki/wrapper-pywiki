@@ -215,9 +215,11 @@ def readFileAndProcess(file_url) :
                 try:
                     print(f'processing {row[1].rstrip()} on  line no {line_count}')
                     object_row=""
-                    if(row[3].rstrip().isdecimal()):
+                    if(row[3].rstrip().isdigit()):
                         object_row="Article "+row[3].rstrip()
-                    claims_hash=createClaim(row[1].rstrip(), row[4].rstrip(), object_row, claims_hash)
+                    else:
+                        object_row = row[3].rstrip()
+                    claims_hash=createClaim(row[1].rstrip(), row[2].rstrip(), object_row, claims_hash)
                     print(claims_hash)
                 except:
                     e = sys.exc_info()[0]
@@ -225,7 +227,7 @@ def readFileAndProcess(file_url) :
             line_count += 1
 
 
-# readFileAndProcess('data/Concepts.csv')
+
 def test():
     print(config.get('wikibase', 'user'))
     test_item=pywikibot.ItemPage(wikibase_repo, "Q1")
@@ -234,7 +236,7 @@ def test():
     test_item_sparql=getWikiItemSparql('Article 25')
     print(test_item_sparql)
 
-test()
+readFileAndProcess('data/Triplets-merged.csv')
 
 exit()
 
