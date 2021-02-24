@@ -11,6 +11,7 @@ import csv
 from IdSparql import IdSparql
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
+# import pandas as pd
 
 #application config
 import configparser
@@ -119,9 +120,9 @@ def createItem(label, description, key, entity_list) :
             -1]
         return entity_list
 
-def readFileAndProcessV3() :
+def readFileAndProcess() :
     entity_list={}
-    with open('data/Triplets.csv') as csv_file:
+    with open('data/Triplets.csv',encoding="utf-8") as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
@@ -140,6 +141,26 @@ def readFileAndProcessV3() :
                     print(f"ERROR : inserting concept {row[1].rstrip()} , count : {line_count}")
                 line_count+=1
 
+# def readFileAndProcessV2() :
+#     entity_list={}
+#     df=pd.read_csv('data/Triplets.csv', sep=',', engine='python')
+#     line_count = 0
+#     for row in df.iterrows():
+#         new_item={}
+#         print(f'processing line no {line_count}')
+#         if(line_count==0) :
+#             line_count+=1
+#         else:
+#             try:
+#                 data = {}
+#                 print(f"inserting concept {row[1].rstrip()} , count : {line_count}")
+#                 label = {"en": capitaliseFirstLetter(row[1].rstrip())}
+#                 description = {"en": capitaliseFirstLetter(row[1].rstrip()) + " entity"}
+#                 entity_list = createItem(label, description, row[1].rstrip(), entity_list)
+#             except:
+#                 print(f"ERROR : inserting concept {row[1].rstrip()} , count : {line_count}")
+#             line_count+=1
+#
 
 # this method helps to run the configuration test
 def test():
@@ -153,6 +174,6 @@ def test():
     isExist=getWikiItemSparql('equality')
     print(isExist)
 
-readFileAndProcessV3()
+readFileAndProcess()
 # test()
 exit()

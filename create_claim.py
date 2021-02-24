@@ -359,7 +359,7 @@ def test():
 # readFileAndProcess('data/Triplets-merged.csv')
 def start():
     createClaim=CreateClaim()
-    createClaim.readFileAndProcess('data/Triplets-merged.csv')
+    createClaim.readFileAndProcess('data/Triplets.csv')
 
 start()
 # test()
