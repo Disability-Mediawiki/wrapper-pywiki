@@ -116,7 +116,7 @@ def readFileAndProcess():
         line_count = 0
         property_map={}
         for row in csv_reader:
-            print(f'Processing line number of {line_count}.')
+            print(f'Processing line number of {line_count} ')
             if line_count ==0:
                 print(f'Column Headings are {", ".join(row)}')
                 line_count += 1
@@ -135,7 +135,7 @@ def readFileAndProcess():
 
 
                 line_count += 1
-        print(f'Completed Creating Properties total of {line_count}.')
+        print(f'Completed Creating Properties total of {line_count} ')
 
 readFileAndProcess();
 
