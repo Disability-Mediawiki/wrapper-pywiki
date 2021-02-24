@@ -151,6 +151,6 @@ def test():
     isExist=getWikiItemSparql('equality')
     print(isExist)
 
-# readFileAndProcessV3()
-test()
+readFileAndProcessV3()
+# test()
 exit()
