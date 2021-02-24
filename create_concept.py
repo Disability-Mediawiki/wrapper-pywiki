@@ -148,9 +148,11 @@ def test():
     print(page)
     res=getWikiItemSparql("Test Item")
     print(res)
+    property=pywikibot.PropertyPage(wikibase_repo,'P20')
+    print(property.type)
     isExist=getWikiItemSparql('equality')
     print(isExist)
 
-readFileAndProcessV3()
-# test()
+# readFileAndProcessV3()
+test()
 exit()
