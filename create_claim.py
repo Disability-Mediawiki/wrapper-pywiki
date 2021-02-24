@@ -252,7 +252,9 @@ class CreateClaim :
                 "CREATE OBJECT"
                 return claims_hash
         elif(property_item.type==PropertyDataType.String.value):
-            object_item=object_string
+            object_item=object_string.rstrip()
+        elif(property_item.type==PropertyDataType.ExternalId.value):
+            object_item=object_string.rstrip()
         elif (property_item.type == PropertyDataType.Quantity.value):
             "NEEDS TO MODIFY THIS CASE"
             return claims_hash
@@ -321,7 +323,7 @@ class CreateClaim :
                 if(row[1]== None or row[2]== None or row[3]== None) :
                     line_count += 1
                     continue
-                if (self.capitaliseFirstLetter(row[2].rstrip()) == 'Mentioned in crpd article'):  # Skipping heading row
+                if (self.capitaliseFirstLetter(row[2].rstrip()) == 'Has wikidata code'):  # Skipping heading row
                     print("asd")
                 if (line_count == 0): #Skipping heading row
                     line_count += 1
@@ -358,6 +360,7 @@ def test():
 def start():
     createClaim=CreateClaim()
     createClaim.readFileAndProcess('data/Triplets-merged.csv')
+
 start()
 # test()
 exit()

@@ -6,3 +6,4 @@ class PropertyDataType(enum.Enum):
    Quantity = 'quantity'
    Time = 'time'
    URL = 'url'
+   ExternalId= 'external-id'
