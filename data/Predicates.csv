@@ -1,6 +1,5 @@
 Predicates,Data-Type,Label
-Has Wikidata identifier,string,Has wikidata entity id
-Has Wikidata Code,string,Corresponding Wikidata code for the concept
+Has Wikidata Code,external-id,Corresponding Wikidata code for the concept
 Has Topic ,wikibase-item,The topic of the article
 Has CRPD Text,string,CRPD Text 
 Has Wikidata Definition,string,Definion from Wikidata
