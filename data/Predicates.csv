@@ -1,5 +1,6 @@
 Predicates,Data-Type,Label
 Has Wikidata Code,external-id,Corresponding Wikidata code for the concept
+Has Wikidata Identifier,external-id,Corresponding Wikidata code for the concept
 Has Topic ,wikibase-item,The topic of the article
 Has CRPD Text,string,CRPD Text 
 Has Wikidata Definition,string,Definion from Wikidata
@@ -18,3 +19,4 @@ Has CRPD Definition,string,Definition from CRPD Document
 Require Wikidata Definition ,string,Require Wikidata Definition 
 Wikidata reference,url,Has wikidata entity link
 Has substitute item,wikibase-item,"This is generally a duplicate item found in different data sources, about the same concept as another entity/item. "
+Has wikidata substitute item,wikibase-item,"This is generally a duplicate item found in wikidata, about the same concept as another entity/item. "
