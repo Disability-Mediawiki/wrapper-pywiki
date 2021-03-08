@@ -109,9 +109,42 @@ def createProperty(label, description,datatype, property_map):
        property_map[capitaliseFirstLetter(label).rstrip()] = property_result['results']['bindings'][0]['s']['value'].split("/")[-1]
        return property_map;
 
+def createPropertyV2(labelStr, label, description,datatype,aliases, property_map):
+    if (capitaliseFirstLetter(labelStr.rstrip()) in property_map):
+        return property_map
+    property_result = getWikiItemSparql(capitaliseFirstLetter(labelStr.rstrip()))
+    if (len(property_result['results']['bindings']) == 0):
+        data = {}
+        print(f"creating property {labelStr} ")
+        data['labels'] = label
+        data['descriptions'] = description
+        if(len(aliases)>0):
+            data['aliases'] = aliases
+        new_property = pywikibot.PropertyPage(wikibase_repo,datatype=datatype)
+        new_property.editEntity(data)
+        # new_property.get();
+        print(new_property.type, new_property.id)
+        property_map[capitaliseFirstLetter(labelStr).rstrip()]=new_property.id
+        return property_map;
+    else:
+        data = {}
+        print(f"creating property {labelStr} ")
+        data['labels'] = label
+        data['descriptions'] = description
+        if (len(aliases) > 0):
+            data['aliases'] = aliases
+        exist_property = pywikibot.PropertyPage(wikibase_repo,property_result['results']['bindings'][0]['s']['value'].split("/")[-1])
+        exist_property.get();
+        exist_property.editEntity(data)
+
+        print(exist_property.type, exist_property.id)
+        property_map[capitaliseFirstLetter(labelStr).rstrip()] = exist_property.id
+        return property_map;
+
+
 #Reading CSV
 def readFileAndProcess():
-    with open('data/Predicates.csv') as csv_file:
+    with open('data/PredicatesWithAliases.csv') as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         property_map={}
@@ -121,22 +154,33 @@ def readFileAndProcess():
                 print(f'Column Headings are {", ".join(row)}')
                 line_count += 1
             else:
+                description="";
+                aliases="";
                 if not row[2] :
-                    description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
-                    label = capitaliseFirstLetter(row[0]).rstrip()
-                    datatype = row[1]
-                    property_map= createProperty(label,description,datatype,property_map)
 
+                    description = {"en": capitaliseFirstLetter(row[0]).rstrip()+" : property"}
+                    # description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
                 else :
-                    description=capitaliseFirstLetter(row[2]).rstrip()
-                    label = capitaliseFirstLetter(row[0]).rstrip()
-                    datatype= row[1]
-                    property_map = createProperty(label, description, datatype, property_map)
+                    description = {"en": capitaliseFirstLetter(row[2]).rstrip()}
+                    # description=capitaliseFirstLetter(row[2]).rstrip()
+                if len(row[3])>0 :
+                    aliases = {"en": capitaliseFirstLetter(row[3]).rstrip().split(",")}
+                    # aliases=capitaliseFirstLetter(row[3]).rstrip()
 
-
+                label = {"en": capitaliseFirstLetter(row[0]).rstrip()}
+                labelStr = capitaliseFirstLetter(row[0]).rstrip()
+                datatype = row[1]
+                property_map = createPropertyV2(labelStr,label, description, datatype,aliases, property_map)
                 line_count += 1
         print(f'Completed Creating Properties total of {line_count} ')
 
-readFileAndProcess();
 
+
+def test():
+    property_map={}
+    property_map= createProperty('Has wikidata identifier', 'Corresponding wikidata code for the entity', 'external-id', property_map)
+    print(property_map)
+
+# test()
+readFileAndProcess();
 exit()

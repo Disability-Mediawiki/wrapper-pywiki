@@ -14,8 +14,9 @@ from pywikibot.data import api
 # application config
 import configparser
 from datetime import timedelta
+import time
 """
-THIS CLASS HELPS TO CREATE CLAIMS WITH EXISTING ITEMS AND PROPERTIES
+THIS CLASS RUNS FREQUENTLY TO MONITOR THE CHANGES AND IMPORT WIKIDATA CHANGES IF ANY
 """
 
 class MonitorChanges:
@@ -181,7 +182,8 @@ class MonitorChanges:
     # get changes
     def getChanges(self):
         current_time = self.wikibase.server_time()
-        requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(hours=6))
+        # requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(hours=1))
+        requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(minutes=3))
         response=requests.request.submit();
         changes=response.get('query')['recentchanges']
         for change in changes:
@@ -206,7 +208,15 @@ def start():
         # changes.importWikiDataConcept('Q3031')
         changes.getWikiDataItemtifier()
         changes.getWikiDataPropertyItemtifier()
-        res = changes.getChanges()
+        while True:
+            try:
+                res = changes.getChanges()
+            except Exception as e:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                tb = traceback.extract_tb(exc_tb)[-1]
+                print(f'ERROR >> {e}')
+                print(exc_type, tb[2], tb[1])
+            time.sleep(2)
     except Exception as e:
         exc_type, exc_obj, exc_tb = sys.exc_info()
         tb = traceback.extract_tb(exc_tb)[-1]
