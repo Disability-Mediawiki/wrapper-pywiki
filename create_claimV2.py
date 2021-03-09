@@ -14,6 +14,7 @@ from Enum.PropertyDatatypeEnum import PropertyDataType
 from pywikibot.data import api
 # application config
 import configparser
+import re
 
 """
 THIS CLASS HELPS TO CREATE CLAIMS WITH EXISTING ITEMS AND PROPERTIES
@@ -41,6 +42,11 @@ class CreateClaim:
 
     sparql = SPARQLWrapper(config.get('wikibase', 'sparqlEndPoint'))
     site = pywikibot.Site()
+
+    def logError(self,error_list):
+        file1 = open("logs/debug_logs.txt", "a")
+        file1.writelines(error_list)
+        file1.close()
 
     # Searches a concept based on its label with a API call
     def searchWikiItem(self, label):
@@ -254,20 +260,18 @@ class CreateClaim:
                 "CREATE OBJECT"
                 return claims_hash
         elif (property_item.type == PropertyDataType.String.value):
-            object_item = object_string.rstrip()
+
+            object_item = str(object_string.rstrip().lstrip())
+            object_item = object_item.rstrip().replace('\n',' ').replace('\t',' ')
+            object_item=re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\<|\>', ' ', object_item)
+
+            # object_item =re.sub('[^A-Za-z0-9]+', ' ', object_string)
+            # object_item = re.sub(r'[?|$|.|!]', r'', object_item)
         elif (property_item.type == PropertyDataType.ExternalId.value):
             object_item = object_string.rstrip()
         elif (property_item.type == PropertyDataType.Quantity.value):
             "NEEDS TO MODIFY THIS CASE"
             return claims_hash
-            # object_item = row[3].rstrip()
-
-        # # TEST PURPOSE
-        # if (property_item.get('labels')['labels']['en'] == "Has wikidata code"):
-        #     print("IMPORTING WIKIDATA ITEM")
-        #     self.linkWikidataItem(subject_item, object_item.rstrip())
-        #     print("DONE IMPORTING WIKIDATA ITEM")
-        # # TEST PURPOSE
 
         # CREATE CLAIM AND EDIT SUBJECT ENTITY
         try:
@@ -280,6 +284,9 @@ class CreateClaim:
                         if (existing_target['datatype'] == PropertyDataType.String.value):
                             if (existing_target['value'] == object_item):
                                 return claims_hash
+                        elif (existing_target['datatype'] == PropertyDataType.ExternalId.value):
+                            if (existing_target['value'] == object_item):
+                                return claims_hash
                         elif (existing_target['datatype'] == PropertyDataType.WikiItem.value):
                             if (existing_target['value'].id == object_item.id):
                                 return claims_hash
@@ -287,24 +294,22 @@ class CreateClaim:
                             "NEEDS TO BE DEFINED"
                             return claims_hash
 
-                # if(property_item.id in claims_hash[subject_item.id]):
-                #     existing_target=claims_hash[subject_item.id][property_item.id]
-                #     if(existing_target is not None) :
-                #         if(existing_target['datatype']==PropertyDataType.String.value) :
-                #             if(existing_target['value'] == object_item) :
-                #                 return claims_hash
-                #         elif(existing_target['datatype']==PropertyDataType.WikiItem.value) :
-                #             if(existing_target['value'].id == object_item.id) :
-                #                 return claims_hash
-                #         elif (existing_target['datatype'] == PropertyDataType.Quantity.value):
-                #             "NEEDS TO BE DEFINED"
-                #             return claims_hash
-
-            # CHECK ALREADY CLAIMS EXIST IN WIKIBASE
+            # CHECK ALREADY CLAIM EXIST IN WIKIBASE
             existing_claims = self.getClaim(subject_id)
             if u'' + property_id + '' in existing_claims[u'claims']:
-                pywikibot.output(u'Error: Already claim is created')
-                return claims_hash
+                if(property_item.type==PropertyDataType.String.value):
+                    statement_value=existing_claims[u'claims'].get(property_id)[0].toJSON().get('mainsnak').get('datavalue').get('value')
+                    if(statement_value==object_item):
+                        pywikibot.output(u'Error: Already claim is created')
+                        return claims_hash
+                elif(property_item.type==PropertyDataType.WikiItem.value) :
+                    if(object_item.id=='Q'+str(existing_claims[u'claims'].get(property_id)[0].toJSON().get('mainsnak').get('datavalue').get('value').get('numeric-id'))):
+                        pywikibot.output(u'Error: Already claim is created')
+                        return claims_hash
+                elif (property_item.type == PropertyDataType.ExternalId.value):
+                    if (object_item == existing_claims[u'claims'].get(property_id)[0].toJSON().get('mainsnak').get('datavalue').get('value').get('numeric-id')):
+                        pywikibot.output(u'Error: Already claim is created')
+                        return claims_hash
 
             print(f"inserting statement for {subject_string.rstrip()} ")
             claim = pywikibot.Claim(self.wikibase_repo, property_item.id, datatype=property_item.type)
@@ -352,19 +357,14 @@ class CreateClaim:
                 else:
                     # CREATE CLAIM AND EDIT SUBJECT ENTITY
                     try:
-                        print(
-                            f"processin : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}")
+                        print(f"processin : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}")
                         print(f'line no {line_count}')
                         object_row = ""
                         if (row[3].rstrip().isdigit()):
+                            # object_row = "CRPD_Article " + row[3].rstrip()
                             object_row = "CRPD_Article " + row[3].rstrip()
                         else:
                             object_row = row[3].rstrip()
-                        # property_row=""
-                        # if (self.capitaliseFirstLetter(row[2].rstrip()) == 'Has wikidata code'):  # Skipping heading row
-                        #     property_row="Has wikidata identifier"
-                        # else :
-                        #     property_row = self.capitaliseFirstLetter(row[2].rstrip())
                         claims_hash = self.createClaim(row[1].rstrip(), self.capitaliseFirstLetter(row[2].rstrip()),
                                                        object_row, claims_hash)
                         print(claims_hash)
@@ -381,18 +381,15 @@ def test():
     test = CreateClaim()
     property = pywikibot.PropertyPage(test.wikibase_repo, 'P7')
     print(property)
-
     claim_hash = {}
     claim_hash = test.createClaim("Health", "Has wikidata code", "Q37115910", claim_hash)
     print(claim_hash)
-    # test_item_sparql=getWikiItemSparql('Has wikidata code')
-    # print(test_item_sparql)
-
 
 # readFileAndProcess('data/Triplets-merged.csv')
 def start():
     createClaim = CreateClaim()
-    createClaim.readFileAndProcess('data/Triplets.csv')
+    # createClaim.readFileAndProcess('data/TripletsClean.csv')
+    # createClaim.logError(["This is Delhi \n","This is Paris \n","This is London \n"])
 
 
 start()

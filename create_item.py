@@ -79,7 +79,7 @@ def capitaliseFirstLetter(word):
     return word.capitalize()
 
 def logError(error_list):
-    file1 = open("logs/debug_logs.txt", "w")
+    file1 = open("logs/debug_logs.txt", "a")
     file1.writelines(error_list)
     file1.close()
 
@@ -142,34 +142,14 @@ def readFileAndProcess(filePath):
                     description = {"en": capitaliseFirstLetter(row[1].rstrip()) + " entity"}
                     entity_list = createItem(label, description, row[1].rstrip(), entity_list)
                 except Exception as e:
-                    print(f"ERROR : inserting Concept {row[1].rstrip()} , Property {row[2].rstrip()}  Line counse: {line_count}")
+                    err_msg=f"ERROR : inserting Concept {row[1].rstrip()} , Property {row[2].rstrip()}  Line count: {line_count}"
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     tb = traceback.extract_tb(exc_tb)[-1]
-                    print(f"ERROR >>>: + {exc_type} , {tb[2]} , {tb[1]}")
+                    err_trace=f"ERROR_TRACE >>>: + {exc_type} , method: {tb[2]} , line-no: {tb[1]}"
+                    logError([f"{err_msg} \n", f"{err_trace} \n", f"ERROR >> {e} \n", f"{datetime.now()} \n\n\n"])
 
                 line_count += 1
 
-
-# def readFileAndProcessV2() :
-#     entity_list={}
-#     df=pd.read_csv('data/Triplets.csv', sep=',', engine='python')
-#     line_count = 0
-#     for row in df.iterrows():
-#         new_item={}
-#         print(f'processing line no {line_count}')
-#         if(line_count==0) :
-#             line_count+=1
-#         else:
-#             try:
-#                 data = {}
-#                 print(f"inserting concept {row[1].rstrip()} , count : {line_count}")
-#                 label = {"en": capitaliseFirstLetter(row[1].rstrip())}
-#                 description = {"en": capitaliseFirstLetter(row[1].rstrip()) + " entity"}
-#                 entity_list = createItem(label, description, row[1].rstrip(), entity_list)
-#             except:
-#                 print(f"ERROR : inserting concept {row[1].rstrip()} , count : {line_count}")
-#             line_count+=1
-#
 
 # this method helps to run the configuration test
 def test():
@@ -184,8 +164,8 @@ def test():
     print(isExist)
 
 
-# readFileAndProcess('data/TripletsClean.csv')
+readFileAndProcess('data/TripletsClean.csv')
 # test()
-logError(["This is Delhi \n","This is Paris \n","This is London \n"])
+# logError(["THHHHHH \n","This is Paris \n","This is London \n"])
 
 exit()
