@@ -12,6 +12,7 @@ import csv
 from IdSparql import IdSparql
 from SPARQLWrapper import SPARQLWrapper, JSON
 import time
+from logger import DebugLogger
 # application config
 import configparser
 
@@ -40,12 +41,17 @@ def searchWikiItem(label):
     if label is None:
         return True
     params = {'action': 'wbsearchentities', 'format': 'json',
-              'language': 'en', 'type': 'item', 'limit': 1,
+              'language': 'en', 'type': 'item',
+              # 'limit': 1,
               'search': label}
     request = wikibase._simple_request(**params)
     result = request.submit()
     print(result)
-    return True if len(result['search']) > 0 else False
+    if(len(result['search']) > 0):
+        for item in result['search']:
+            if (item.get('label')==label) :
+                return True
+    return False
 
 
 # Searches a concept based on its label on Tripple store
@@ -142,30 +148,39 @@ def readFileAndProcess(filePath):
                     description = {"en": capitaliseFirstLetter(row[1].rstrip()) + " entity"}
                     entity_list = createItem(label, description, row[1].rstrip(), entity_list)
                 except Exception as e:
-                    err_msg=f"ERROR : inserting Concept {row[1].rstrip()} , Property {row[2].rstrip()}  Line count: {line_count}"
+                    err_msg=f"ERROR : Entity:  {row[1].rstrip()} , Property {row[2].rstrip()}  Line count: {line_count}"
                     exc_type, exc_obj, exc_tb = sys.exc_info()
                     tb = traceback.extract_tb(exc_tb)[-1]
                     err_trace=f"ERROR_TRACE >>>: + {exc_type} , method: {tb[2]} , line-no: {tb[1]}"
-                    logError([f"{err_msg} \n", f"{err_trace} \n", f"ERROR >> {e} \n", f"{datetime.now()} \n\n\n"])
+                    # logError([f"{err_msg} \n", f"{err_trace} \n", f"ERROR >> {e} \n", f"{datetime.now()} \n\n"])
+                    logger=DebugLogger();
+                    logger.logError('CREATE_ITEM',e, exc_type, exc_obj, exc_tb, tb, err_msg)
 
                 line_count += 1
 
 
 # this method helps to run the configuration test
 def test():
-    site = pywikibot.Site()
-    page = pywikibot.Page(site, 'Test Item')
-    print(page)
-    res = getWikiItemSparql("Test Item")
-    print(res)
-    property = pywikibot.PropertyPage(wikibase_repo, 'P24')
-    print(property.type)
-    isExist = getWikiItemSparql('equality')
-    print(isExist)
+    #TEST CASE 1
+    # site = pywikibot.Site()
+    # page = pywikibot.Page(site, 'Test Item')
+    # print(page)
+    # res = getWikiItemSparql("Test Item")
+    # print(res)
+    # property = pywikibot.PropertyPage(wikibase_repo, 'P24')
+    # print(property.type)
+    # isExist = getWikiItemSparql('equality')
+    # print(isExist)
+
+    #TEST CASE 2
+    data = {}
+    entity_list={}
+    label = {"en": capitaliseFirstLetter("CRPD_Article 2".rstrip())}
+    description = {"en": capitaliseFirstLetter("CRPD_Article 2".rstrip()) + " entity"}
+    entity_list = createItem(label, description, "CRPD_Article 2".rstrip(), entity_list)
+
 
 
 readFileAndProcess('data/TripletsClean.csv')
-# test()
-# logError(["THHHHHH \n","This is Paris \n","This is London \n"])
 
 exit()

@@ -1,5 +1,5 @@
 # coding=utf-8
-import os
+import sys, os, traceback
 import csv
 import pywikibot
 from pywikibot import config2
@@ -9,6 +9,7 @@ import json
 import csv
 from IdSparql import IdSparql
 from SPARQLWrapper import SPARQLWrapper, JSON
+from logger import DebugLogger
 # application config
 import configparser
 appConfig = configparser.ConfigParser()
@@ -154,23 +155,31 @@ def readFileAndProcess():
                 print(f'Column Headings are {", ".join(row)}')
                 line_count += 1
             else:
-                description="";
-                aliases="";
-                if not row[2] :
+                try:
+                    description="";
+                    aliases="";
+                    if not row[2] :
+                        description = {"en": capitaliseFirstLetter(row[0]).rstrip()+" : property"}
+                        # description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
+                    else :
+                        description = {"en": capitaliseFirstLetter(row[2]).rstrip()}
+                        # description=capitaliseFirstLetter(row[2]).rstrip()
+                    if len(row[3])>0 :
+                        aliases = {"en": capitaliseFirstLetter(row[3]).rstrip().split(",")}
+                        # aliases=capitaliseFirstLetter(row[3]).rstrip()
 
-                    description = {"en": capitaliseFirstLetter(row[0]).rstrip()+" : property"}
-                    # description = capitaliseFirstLetter(row[0]).rstrip()+" : property"
-                else :
-                    description = {"en": capitaliseFirstLetter(row[2]).rstrip()}
-                    # description=capitaliseFirstLetter(row[2]).rstrip()
-                if len(row[3])>0 :
-                    aliases = {"en": capitaliseFirstLetter(row[3]).rstrip().split(",")}
-                    # aliases=capitaliseFirstLetter(row[3]).rstrip()
-
-                label = {"en": capitaliseFirstLetter(row[0]).rstrip()}
-                labelStr = capitaliseFirstLetter(row[0]).rstrip()
-                datatype = row[1]
-                property_map = createPropertyV2(labelStr,label, description, datatype,aliases, property_map)
+                    label = {"en": capitaliseFirstLetter(row[0]).rstrip()}
+                    labelStr = capitaliseFirstLetter(row[0]).rstrip()
+                    datatype = row[1]
+                    property_map = createPropertyV2(labelStr,label, description, datatype,aliases, property_map)
+                except Exception as e:
+                    err_msg=f"ERROR : Entity:  {row[1].rstrip()} , Property {row[2].rstrip()}  Line count: {line_count}"
+                    exc_type, exc_obj, exc_tb = sys.exc_info()
+                    tb = traceback.extract_tb(exc_tb)[-1]
+                    err_trace=f"ERROR_TRACE >>>: + {exc_type} , method: {tb[2]} , line-no: {tb[1]}"
+                    # logError([f"{err_msg} \n", f"{err_trace} \n", f"ERROR >> {e} \n", f"{datetime.now()} \n\n"])
+                    logger=DebugLogger();
+                    logger.logError('CREATE_ITEM',e, exc_type, exc_obj, exc_tb, tb, err_msg)
                 line_count += 1
         print(f'Completed Creating Properties total of {line_count} ')
 
