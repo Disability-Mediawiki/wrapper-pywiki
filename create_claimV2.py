@@ -258,7 +258,7 @@ class CreateClaim:
 
             object_item = str(object_string.rstrip().lstrip())
             object_item = object_item.rstrip().replace('\n',' ').replace('\t',' ')
-            object_item=re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\<|\>', ' ', object_item)
+            object_item=re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\?|\*|\&|\@|\<|\>', ' ', object_item)
 
             # object_item =re.sub('[^A-Za-z0-9]+', ' ', object_string)
             # object_item = re.sub(r'[?|$|.|!]', r'', object_item)
@@ -371,7 +371,7 @@ class CreateClaim:
                         tb = traceback.extract_tb(exc_tb)[-1]
                         err_trace = f"ERROR_TRACE >>>: + {exc_type} , method: {tb[2]} , line-no: {tb[1]}"
                         logger = DebugLogger();
-                        logger.logError('CREATE_ITEM', e, exc_type, exc_obj, exc_tb, tb, err_msg)
+                        logger.logError('CREATE_CLAIM_V2', e, exc_type, exc_obj, exc_tb, tb, err_msg)
                 line_count += 1
 
 
