@@ -90,12 +90,11 @@ class MonitorChanges:
 
     # get changes
     def getChanges(self):
-        # current_time = self.wikibase.server_time()
-        # requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(minutes=20))
-        # response=requests.request.submit();
-        # changes=response.get('query')['recentchanges']
-        #
-        changes=get_wikibase_changes.get_wikidata_changes(None, 3)
+        current_time = self.wikibase.server_time()
+        requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(minutes=20))
+        response=requests.request.submit();
+        changes=response.get('query')['recentchanges']
+
         for change in changes:
             try:
                 if(change.get('type') == 'new'):

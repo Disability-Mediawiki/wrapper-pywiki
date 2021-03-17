@@ -391,8 +391,8 @@ def start():
 
 
 
-# start()
-test()
+start()
+# test()
 exit()
 
 
