@@ -1039,7 +1039,7 @@ def wikidata_link(wikibase_item, wikidata_item):
         wikibase_item.addClaim(claim)
 
 
-def changeItem(self, wikidata_item,wikibase_repo,statements):
+def changeItem(wikidata_item,wikibase_repo,statements):
     try:
         item = wikidata_item.get()
     except pywikibot.exceptions.UnknownSite as e:

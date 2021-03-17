@@ -179,11 +179,12 @@ class MonitorChanges:
 
 
     from util.util import changeItem, changeProperty, importProperty
+    from pywikibot.diff import PatchManager
     # get changes
     def getChanges(self):
         current_time = self.wikibase.server_time()
         # requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(hours=1))
-        requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(minutes=3))
+        requests=self.wikibase.recentchanges(start=current_time, end=current_time - timedelta(minutes=240))
         response=requests.request.submit();
         changes=response.get('query')['recentchanges']
         for change in changes:
@@ -196,7 +197,7 @@ class MonitorChanges:
                     self.checkDifferences(item_id, change)
             except Exception as e:
                 print(
-                    f'ERROR CHECKING DIFFERENCES : {item_id}, ERROR_MESSAGE >> {e}')
+                    f'ERROR CHECKING DIFFERENCES : ERROR_MESSAGE >> {e}')
                 exc_type, exc_obj, exc_tb = sys.exc_info()
                 tb = traceback.extract_tb(exc_tb)[-1]
                 print(exc_type, tb[2], tb[1])
