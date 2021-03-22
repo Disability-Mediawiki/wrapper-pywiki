@@ -2,4 +2,4 @@
 
 # SERVER
 # (u'WikibaseAdmin', BotPassword(u'bot_user_1', u'l6iqlo2csa8q6hogpghr64p5ld2fos4o'))
-(u'WikibaseAdmin', BotPassword(u'bot_user_1', u'g09hkvpd7045fr659i58h34aunlj1g3k'))
+(u'WikibaseAdmin', BotPassword(u'bot_user_1', u'tvmeu916qutrb6f7d5rlp7spqhh6hfp3'))

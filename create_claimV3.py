@@ -20,28 +20,34 @@ from logger import DebugLogger
 THIS CLASS HELPS TO CREATE CLAIMS WITH EXISTING ITEMS AND PROPERTIES
 """
 
+config = configparser.ConfigParser()
+config.read('config/application.config.ini')
+
+family = 'my'
+mylang = 'my'
+familyfile = os.path.relpath("./config/my_family.py")
+if not os.path.isfile(familyfile):
+    print("family file %s is missing" % (familyfile))
+config2.register_family_file(family, familyfile)
+config2.password_file = "user-password.py"
+config2.usernames['my']['my'] = config.get('wikibase', 'user')
+
+# connect to the wikibase
+wikibase = pywikibot.Site("my", "my")
+sparql = SPARQLWrapper(config.get('wikibase', 'sparqlEndPoint'))
+site = pywikibot.Site()
+
+# connect to wikidata
+wikidata = pywikibot.Site("wikidata", "wikidata")
+
 
 class CreateClaim:
-    config = configparser.ConfigParser()
-    config.read('config/application.config.ini')
+    def __init__(self, wikibase,wikidata, sparql):
+        self.sparql=sparql
+        self.wikibase=wikibase
+        self.wikibase_repo=wikibase.data_repository()
+        self.wikidata_repo = wikidata.data_repository()
 
-    family = 'my'
-    mylang = 'my'
-    familyfile = os.path.relpath("./config/my_family.py")
-    if not os.path.isfile(familyfile):
-        print("family file %s is missing" % (familyfile))
-    config2.register_family_file(family, familyfile)
-    config2.password_file = "user-password.py"
-    # config2.usernames['my']['my'] = 'DG Regio'
-    # config2.usernames['my']['my'] = 'WikibaseAdmin'
-    config2.usernames['my']['my'] = config.get('wikibase', 'user')
-
-    # connect to the wikibase
-    wikibase = pywikibot.Site("my", "my")
-    wikibase_repo = wikibase.data_repository()
-
-    sparql = SPARQLWrapper(config.get('wikibase', 'sparqlEndPoint'))
-    site = pywikibot.Site()
 
     # Searches a concept based on its label with a API call
     def searchWikiItem(self, label):
@@ -168,9 +174,7 @@ class CreateClaim:
         claims = entity.get(u'claims')  # Get all the existing claims
         return claims
 
-    # connect to wikidata
-    wikidata = pywikibot.Site("wikidata", "wikidata")
-    wikidata_repo = wikidata.data_repository()
+
 
     # import an item
     from util.util import changeItem, changeProperty, importProperty
@@ -209,7 +213,7 @@ class CreateClaim:
         subject.editEntity(data)
         return subject;
 
-    def createClaim(self, subject_string, property_string, object_string, claims_hash):
+    def create_claim(self, subject_string, property_string, object_string,qualifier_prop, qualifier_target, claims_hash):
         # claims_hash={}
         new_item = {}
         newClaims = []
@@ -259,9 +263,6 @@ class CreateClaim:
             object_item = str(object_string.rstrip().lstrip())
             object_item = object_item.rstrip().replace('\n',' ').replace('\t',' ')
             object_item=re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\?|\*|\&|\@|\<|\>', ' ', object_item)
-
-            # object_item =re.sub('[^A-Za-z0-9]+', ' ', object_string)
-            # object_item = re.sub(r'[?|$|.|!]', r'', object_item)
         elif (property_item.type == PropertyDataType.ExternalId.value):
             object_item = object_string.rstrip()
         elif (property_item.type == PropertyDataType.Quantity.value):
@@ -317,22 +318,21 @@ class CreateClaim:
         if (claims_hash == None):
             claims_hash = {}
         claims_hash[subject_item.id] = {property_item.id: {'value': object_item, 'datatype': property_item.type}}
-
-        # CONSIDERED IN FUTURE RELEASE
-        # linking wikidata item with property Has wikidata substitute item
-        # if (property_item.get('labels')['labels']['en'] == "Has wikidata identifier"):
-        #     print("ATTEMPTING TO LINK WIKIDATA ITEM")
-        #     try:
-        #         self.linkWikidataItem(subject_item,object_item.rstrip())
-        #         print("DONE LINKING WIKIDATA ITEM")
-        #     except:
-        #         e = sys.exc_info()[0]
-        #         print(f"ERROR : LINKING WIKIDATA ITEM {subject_string.rstrip()} , MESSSAGE >> {e}")
         return claims_hash
 
+
+    def create_qualifier(self,item_id, property_id,qualifier_pid, datatype, target ):
+        item=pywikibot.ItemPage(self.wikibase_repo, item_id)
+        qualifier = pywikibot.Claim(self.wikibase_repo, qualifier_pid)
+        # target = pywikibot.ItemPage(self.wikibase_repo, "Q1")
+        qualifier.setTarget(target)
+        for claim in item.claims[property_id]: #Finds all statements (P131)
+            if item_id not in claim.qualifiers: #If not already exist
+                claim.addQualifier(qualifier, summary=u'Adding a qualifier.') #Adding q
+
+
     # Creating Claims
-    def readFileAndProcess(self, file_url):
-        # claims_hash = dict()
+    def read_file_and_process(self, file_url):
         claims_hash = {}
         self.getWikiDataItemtifier()
         with open(file_url) as csv_file:
@@ -342,7 +342,7 @@ class CreateClaim:
                 if (row[1] == None or row[2] == None or row[3] == None):
                     line_count += 1
                     continue
-                if (line_count == 0):  # Skipping heading row
+                if (line_count == 0):
                     line_count += 1
                 else:
                     # CREATE CLAIM AND EDIT SUBJECT ENTITY
@@ -350,20 +350,26 @@ class CreateClaim:
                         print(f"processin : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}")
                         print(f'line no {line_count}')
                         object_row = ""
+                        qualifier_prop=None
+                        qualifier_target=None
                         if (row[3].rstrip().isdigit()):
-                            # object_row = "CRPD_Article " + row[3].rstrip()
-                            object_row = "CRPD_Article " + row[3].rstrip()
+                            object_row = "Crpd article " + str(row[3]) .rstrip().lstrip()
                         else:
                             object_row = row[3].rstrip()
-                        claims_hash = self.createClaim(row[1].rstrip(), self.capitaliseFirstLetter(row[2].rstrip()),
-                                                       object_row, claims_hash)
+
+                        if len(row) > 4 :
+                            "CREATE CLAIM WITH QUALIFIER"
+                            qualifier_prop=row[5].lower().lstrip().rstrip()
+                            qualifier_target=row[6].lower().lstrip().rstrip()
+
+                        claims_hash = self.create_claim(row[1].rstrip(), self.capitaliseFirstLetter(row[2].rstrip()),
+                                                       object_row,qualifier_prop, qualifier_target, claims_hash)
                         print(claims_hash)
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         tb = traceback.extract_tb(exc_tb)[-1]
                         print(f"ERROR >>>: + {exc_type} , {tb[2]} , {tb[1]}")
-                        print(
-                            f"ERROR : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}")
+                        print(f"ERROR : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}")
                         err_msg = f"ERROR : CREATE_CLAIM_V2.:{type(self).__name__} Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}"
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         tb = traceback.extract_tb(exc_tb)[-1]
@@ -373,24 +379,13 @@ class CreateClaim:
                 line_count += 1
 
 
-def test():
-    test = CreateClaim()
-    property = pywikibot.PropertyPage(test.wikibase_repo, 'P7')
-    print(property)
-    claim_hash = {}
-    # claim_hash = test.createClaim("Health", "Has wikidata code", "Q37115910", claim_hash)
-    claim_hash = test.createClaim("Crpd_article 6 ", "Has subtopic", "Discrimination", claim_hash)
-    print(claim_hash)
-
-# readFileAndProcess('data/Triplets-merged.csv')
 def start():
-    createClaim = CreateClaim()
-    createClaim.readFileAndProcess('data/TripletsClean.csv')
+    createClaim = CreateClaim(wikibase,wikidata, sparql)
+    createClaim.read_file_and_process('data/TripletPrepared.csv')
 
 
 
 start()
-# test()
 exit()
 
 

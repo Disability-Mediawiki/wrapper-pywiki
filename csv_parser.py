@@ -15,28 +15,41 @@ class Csv_Parser:
                 wr = csv.writer(myfile, delimiter=',')
                 for row in csv_reader:
                     try:
-                        if(row[2].capitalize().rstrip().lstrip()=="Has crpd definition"):
-                            wr.writerow([row[0],row[1], "has definition","BN"+str(line_count)])
-                            wr.writerow([row[0], "BN"+str(line_count), "has definition", row[3]])
-                            wr.writerow([row[0], "BN"+str(line_count), "according to", "Crpd article "+str(row[0])])
-
-                        elif(row[2].capitalize().rstrip().lstrip()=="Has wikidata definition"):
-                            wr.writerow([row[0],row[1], "has definition","BN"+str(line_count)])
-                            wr.writerow([row[0], "BN"+str(line_count), "has definition", row[3]])
-                            wr.writerow([row[0], "BN"+str(line_count), "according to", "Wikidata"])
-
+                        # if(row[2].capitalize().rstrip().lstrip()=="Has crpd definition"):
+                        #     wr.writerow([row[0],row[1], "has definition","BN"+str(line_count)])
+                        #     wr.writerow([row[0], "BN"+str(line_count), "has definition", row[3]])
+                        #     wr.writerow([row[0], "BN"+str(line_count), "according to", "Crpd article "+str(row[0])])
+                        #
+                        # elif(row[2].capitalize().rstrip().lstrip()=="Has wikidata definition"):
+                        #     wr.writerow([row[0],row[1], "has definition","BN"+str(line_count)])
+                        #     wr.writerow([row[0], "BN"+str(line_count), "has definition", row[3]])
+                        #     wr.writerow([row[0], "BN"+str(line_count), "according to", "Wikidata"])
+                        #
+                        # elif (row[2].capitalize().rstrip().lstrip() == "Mentioned in crpd article"):
+                        #     wr.writerow([row[0], row[1], "mentioned in", "Crpd article "+str(row[3])])
+                        #
+                        # elif (row[2].capitalize().rstrip().lstrip() == "Has crpd text"):
+                        #     if("Crpd" in row[1].capitalize().rstrip().lstrip()):
+                        #         wr.writerow([row[0],row[1], "has text", row[3]])
+                        #     else:
+                        #         wr.writerow([row[0], row[1], "has text related", "BN" + str(line_count)])
+                        #         wr.writerow([row[0], "BN" + str(line_count), "has text related", row[3]])
+                        #         wr.writerow([row[0], "BN" + str(line_count), "has origin", "Crpd article " + str(row[0])])
+                        # else:
+                        #     wr.writerow([row[0], row[1], row[2].lower(),row[3]])
+                        if (row[2].capitalize().rstrip().lstrip() == "Has crpd definition"):
+                            wr.writerow([row[0], row[1], "has definition", row[3].rstrip().lstrip(),"according to","Crpd article " + str(row[0])])
+                        elif (row[2].capitalize().rstrip().lstrip() == "Has wikidata definition"):
+                            wr.writerow([row[0], row[1], "has definition", row[3].rstrip().lstrip(),"according to","Wikidata"])
                         elif (row[2].capitalize().rstrip().lstrip() == "Mentioned in crpd article"):
-                            wr.writerow([row[0], row[1], "mentioned in", "Crpd article "+str(row[3])])
-
+                            wr.writerow([row[0], row[1], "mentioned in", "Crpd article " + str(row[3])])
                         elif (row[2].capitalize().rstrip().lstrip() == "Has crpd text"):
-                            if("Crpd" in row[1].capitalize().rstrip().lstrip()):
-                                wr.writerow([row[0],row[1], "has text", row[3]])
+                            if ("Crpd" in row[1].capitalize().rstrip().lstrip()):
+                                wr.writerow([row[0], row[1], "has text", row[3]])
                             else:
-                                wr.writerow([row[0], row[1], "has text related", "BN" + str(line_count)])
-                                wr.writerow([row[0], "BN" + str(line_count), "has text related", row[3]])
-                                wr.writerow([row[0], "BN" + str(line_count), "has origin", "Crpd article " + str(row[0])])
+                                wr.writerow([row[0], row[1], "has text related", row[3].rstrip().lstrip(), "has origin", "Crpd article " + str(row[0])])
                         else:
-                            wr.writerow([row[0], row[1], row[2].lower(),row[3]])
+                            wr.writerow([row[0], row[1], row[2].lower(), row[3]])
 
                     except Exception as e:
                         print(e)
@@ -56,3 +69,4 @@ def start():
     csv_Parser.read_file_and_process('data/TripletsClean.csv')
 
 start()
+exit()
