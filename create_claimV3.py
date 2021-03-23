@@ -213,7 +213,7 @@ class CreateClaim:
         subject.editEntity(data)
         return subject;
 
-    def create_claim(self, subject_string, property_string, object_string,qualifier_prop, qualifier_target, claims_hash):
+    def create_claim(self, subject_string, property_string, object_string,claims_hash,qualifier_prop = None, qualifier_target = None):
         # claims_hash={}
         new_item = {}
         newClaims = []
@@ -231,7 +231,7 @@ class CreateClaim:
         else:
             "CREATE SUBJECT"
         # GETTING PROPERTY ITEM
-        property_result = self.getWikiItemSparql(self.capitaliseFirstLetter(property_string).rstrip())
+        property_result = self.getWikiItemSparql(property_string.rstrip().lstrip().lower())
         property_item = {}
         property_id = None
         if (len(property_result['results']['bindings']) > 0):
@@ -248,7 +248,7 @@ class CreateClaim:
         # GETTING OBJECT ITEM
         object_item = {}
         if (property_item.type == PropertyDataType.WikiItem.value):
-            object_result = self.getWikiItemSparql(self.capitaliseFirstLetter(object_string).rstrip())
+            object_result = self.getWikiItemSparql(self.capitaliseFirstLetter(object_string).rstrip().lstrip())
             if (len(object_result['results']['bindings']) > 0):
                 object_uri = object_result['results']['bindings'][0]['s']['value']
                 object_id = object_uri.split("/")[-1]
@@ -259,12 +259,11 @@ class CreateClaim:
                 "CREATE OBJECT"
                 return claims_hash
         elif (property_item.type == PropertyDataType.String.value):
-
-            object_item = str(object_string.rstrip().lstrip())
-            object_item = object_item.rstrip().replace('\n',' ').replace('\t',' ')
+            object_item = object_string.rstrip().replace('\n',' ').replace('\t',' ')
             object_item=re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\?|\*|\&|\@|\<|\>', ' ', object_item)
+            object_item = str(object_item).rstrip().lstrip()
         elif (property_item.type == PropertyDataType.ExternalId.value):
-            object_item = object_string.rstrip()
+            object_item = object_string.rstrip().lstrip()
         elif (property_item.type == PropertyDataType.Quantity.value):
             "NEEDS TO MODIFY THIS CASE"
             return claims_hash
@@ -304,32 +303,86 @@ class CreateClaim:
                         return claims_hash
             elif (property_item.type == PropertyDataType.ExternalId.value):
                 for claim in existing_claims[u'claims'].get(property_id):
-                    if(object_item==str(claim.toJSON().get('mainsnak').get('datavalue').get('value').get('numeric-id'))):
+                    if(object_item==str(claim.toJSON().get('mainsnak').get('datavalue').get('value'))):
                         pywikibot.output(u'Error: Already claim is created')
                         return claims_hash
 
         print(f"inserting statement for {subject_string.rstrip()} ")
         claim = pywikibot.Claim(self.wikibase_repo, property_item.id, datatype=property_item.type)
         claim.setTarget(object_item)
-        newClaims.append(claim.toJSON())
-        data['claims'] = newClaims
-        subject_item.editEntity(data)
+
 
         if (claims_hash == None):
             claims_hash = {}
-        claims_hash[subject_item.id] = {property_item.id: {'value': object_item, 'datatype': property_item.type}}
+        if(qualifier_target is not None and qualifier_prop is not None):
+            qualifier=self.create_qualifier(subject_item.id,qualifier_prop,qualifier_target,claim,claims_hash)
+            if(qualifier is not None):
+                claim.addQualifier(qualifier, summary=u'Adding a qualifier.')
+                claims_hash[subject_item.id] = {property_item.id: {'value': object_item, 'datatype': property_item.type,'qualifier':qualifier}}
+            else:
+                claims_hash[subject_item.id] = {property_item.id: {'value': object_item, 'datatype': property_item.type}}
+        else:
+            claims_hash[subject_item.id] = {property_item.id: {'value': object_item, 'datatype': property_item.type}}
+        newClaims.append(claim.toJSON())
+        data['claims'] = newClaims
+        subject_item.editEntity(data)
         return claims_hash
 
 
-    def create_qualifier(self,item_id, property_id,qualifier_pid, datatype, target ):
-        item=pywikibot.ItemPage(self.wikibase_repo, item_id)
-        qualifier = pywikibot.Claim(self.wikibase_repo, qualifier_pid)
-        # target = pywikibot.ItemPage(self.wikibase_repo, "Q1")
-        qualifier.setTarget(target)
-        for claim in item.claims[property_id]: #Finds all statements (P131)
-            if item_id not in claim.qualifiers: #If not already exist
-                claim.addQualifier(qualifier, summary=u'Adding a qualifier.') #Adding q
+    def create_qualifier(self,item_id, qualifier_prop, qualifier_target,claim, claim_hash ):
 
+        item=pywikibot.ItemPage(self.wikibase_repo, item_id)
+        # GETTING QUALIFIER PROPERTY
+        property_result = self.getWikiItemSparql(qualifier_prop.rstrip().lstrip().lower())
+        property_item = {}
+        property_id = None
+        if (len(property_result['results']['bindings']) > 0):
+            property_uri = property_result['results']['bindings'][0]['s']['value']
+            # property_id=property_uri.rsplit('/', 1)[-1]
+            property_id = property_uri.split("/")[-1]
+            property_item = pywikibot.PropertyPage(self.wikibase_repo, property_id)
+            property_item.get();
+            print(property_item.type, property_item.id)
+        else:
+            "CREATE PROPERTY"
+            return None
+        qualifier = pywikibot.Claim(self.wikibase_repo, property_id)
+        # target = pywikibot.ItemPage(self.wikibase_repo, "Q1")
+        object_item = {}
+        if (qualifier.type == PropertyDataType.WikiItem.value):
+            object_result = self.getWikiItemSparql(self.capitaliseFirstLetter(qualifier_target).rstrip())
+            if (len(object_result['results']['bindings']) > 0):
+                object_uri = object_result['results']['bindings'][0]['s']['value']
+                object_id = object_uri.split("/")[-1]
+                object_item = pywikibot.ItemPage(self.wikibase_repo, object_id)
+                object_item.get();
+                print(object_item.id)
+            else:
+                "CREATE OBJECT"
+                return None
+        elif (qualifier.type == PropertyDataType.String.value):
+
+            object_item = str(qualifier_target.rstrip().lstrip())
+            object_item = object_item.rstrip().replace('\n', ' ').replace('\t', ' ')
+            object_item = re.sub('\ |\/|\;|\:|\]|\[|\{|\}|\?|\*|\&|\@|\<|\>', ' ', object_item)
+            object_item = object_item.rstrip().lstrip()
+        elif (qualifier.type == PropertyDataType.ExternalId.value):
+            object_item = qualifier_target.rstrip().lstrip()
+        elif (qualifier.type == PropertyDataType.Quantity.value):
+            "NEEDS TO MODIFY THIS CASE"
+            return None
+
+        qualifier.setTarget(object_item)
+        if(claim_hash is not None):
+            created_qualifiers=claim_hash.get(item.id,{}).get(claim.id,{}).get( 'qualifier',None);
+            if created_qualifiers is not None:
+                if property_id in created_qualifiers:
+                    return None;
+        if not claim.has_qualifier(property_id,object_item):
+            return qualifier;
+        else:
+            return None;
+        return claim;
 
     # Creating Claims
     def read_file_and_process(self, file_url):
@@ -359,11 +412,11 @@ class CreateClaim:
 
                         if len(row) > 4 :
                             "CREATE CLAIM WITH QUALIFIER"
-                            qualifier_prop=row[5].lower().lstrip().rstrip()
-                            qualifier_target=row[6].lower().lstrip().rstrip()
+                            qualifier_prop=row[4].lower().lstrip().rstrip()
+                            qualifier_target=row[5].lower().lstrip().rstrip()
 
                         claims_hash = self.create_claim(row[1].rstrip(), self.capitaliseFirstLetter(row[2].rstrip()),
-                                                       object_row,qualifier_prop, qualifier_target, claims_hash)
+                                                       object_row,claims_hash,qualifier_prop, qualifier_target )
                         print(claims_hash)
                     except Exception as e:
                         exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -378,15 +431,26 @@ class CreateClaim:
                         logger.logError('CREATE_CLAIM_V2', e, exc_type, exc_obj, exc_tb, tb, err_msg)
                 line_count += 1
 
+    def test(self, sid, pid):
+        object_item=None
+        existing_claims = self.getClaim(sid)
+        for claim in existing_claims[u'claims'].get(pid):
+            if (object_item == str(claim.toJSON().get('mainsnak').get('datavalue').get('value').get('numeric-id'))):
+                pywikibot.output(u'Error: Already claim is created')
+                return None
 
 def start():
     createClaim = CreateClaim(wikibase,wikidata, sparql)
-    createClaim.read_file_and_process('data/TripletPrepared.csv')
+    createClaim.test('Q7','P1');
+    # createClaim.read_file_and_process('data/TripletPrepared.csv')
+
 
 
 
 start()
+
 exit()
+
 
 
 

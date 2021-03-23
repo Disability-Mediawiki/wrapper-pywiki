@@ -20,3 +20,9 @@ Require Wikidata Definition ,string,Wikidata Definition is Required,
 Wikidata reference,url,Has wikidata entity link,
 Has substitute item,wikibase-item,"This is generally a duplicate item found in different data sources, about the same concept as another entity/item. ",
 Has wikidata substitute item,wikibase-item,"This is generally a duplicate item found in wikidata, about the same concept as another entity/item. ",
+Has definition,string,Definition from relevant source,
+has text,string,contains related text,Text from a article
+according to,wikibase-item,according to linked resource,pointing to a source resource
+mentioned in,wikibase-item,mentioned in a related document,pointing to a source resource
+has text related,string,contains related text,
+has origin,wikibase-item,pointing to a source document,

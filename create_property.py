@@ -168,8 +168,8 @@ def readFileAndProcess():
                         aliases = {"en": capitaliseFirstLetter(row[3]).rstrip().split(",")}
                         # aliases=capitaliseFirstLetter(row[3]).rstrip()
 
-                    label = {"en": capitaliseFirstLetter(row[0]).rstrip()}
-                    labelStr = capitaliseFirstLetter(row[0]).rstrip()
+                    label = {"en": row[0].rstrip().lstrip().lower()}
+                    labelStr = row[0].rstrip().lstrip().lower()
                     datatype = row[1]
                     property_map = createPropertyV2(labelStr,label, description, datatype,aliases, property_map)
                 except Exception as e:

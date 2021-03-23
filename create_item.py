@@ -144,9 +144,9 @@ def readFileAndProcess(filePath):
                 try:
                     data = {}
                     print(f"inserting concept {row[1].rstrip()} , count : {line_count}")
-                    label = {"en": capitaliseFirstLetter(row[1].rstrip())}
-                    description = {"en": capitaliseFirstLetter(row[1].rstrip()) + " entity"}
-                    entity_list = createItem(label, description, row[1].rstrip(), entity_list)
+                    label = {"en": capitaliseFirstLetter(row[1].rstrip().lstrip())}
+                    description = {"en": capitaliseFirstLetter(row[1].rstrip().lstrip()) + " entity"}
+                    entity_list = createItem(label, description, row[1].rstrip().lstrip(), entity_list)
                 except Exception as e:
                     err_msg=f"ERROR : Entity:  {row[1].rstrip()} , Property {row[2].rstrip()}  Line count: {line_count}"
                     exc_type, exc_obj, exc_tb = sys.exc_info()
@@ -158,29 +158,6 @@ def readFileAndProcess(filePath):
 
                 line_count += 1
 
-
-# this method helps to run the configuration test
-def test():
-    #TEST CASE 1
-    # site = pywikibot.Site()
-    # page = pywikibot.Page(site, 'Test Item')
-    # print(page)
-    # res = getWikiItemSparql("Test Item")
-    # print(res)
-    # property = pywikibot.PropertyPage(wikibase_repo, 'P24')
-    # print(property.type)
-    # isExist = getWikiItemSparql('equality')
-    # print(isExist)
-
-    #TEST CASE 2
-    data = {}
-    entity_list={}
-    label = {"en": capitaliseFirstLetter("CRPD_Article 2".rstrip())}
-    description = {"en": capitaliseFirstLetter("CRPD_Article 2".rstrip()) + " entity"}
-    entity_list = createItem(label, description, "CRPD_Article 2".rstrip(), entity_list)
-
-
-
-readFileAndProcess('data/TripletsClean.csv')
+readFileAndProcess('data/TripletPrepared.csv')
 
 exit()
