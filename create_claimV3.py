@@ -441,8 +441,7 @@ class CreateClaim:
 
 def start():
     createClaim = CreateClaim(wikibase,wikidata, sparql)
-    createClaim.test('Q7','P1');
-    # createClaim.read_file_and_process('data/TripletPrepared.csv')
+    createClaim.read_file_and_process('data/TripletPrepared.csv')
 
 
 
