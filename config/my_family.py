@@ -29,12 +29,11 @@ class Family(family.WikimediaFamily):
     # langs = {
     #      'my': 'linkedopendata.eu',
     # }
-    # langs = {
-    #     'my': 'localhost:8181',
-    # }
+
     langs = {
-        'my': app_config.get('wikibase','domain'),
+        'my': app_config.get('wikibase', 'domain'),
     }
+
     interwiki_forward = 'wikipedia'
 
     category_redirect_templates = {
@@ -81,14 +80,9 @@ class Family(family.WikimediaFamily):
     #         'my': 'https',
     #     }[code]
 
-    # def protocol(self, code):
-    #     return {
-    #         'my': 'http',
-    #     }[code]
-
     def protocol(self, code):
         return {
-            'my': app_config.get('wikibase','protocol'),
+            'my': app_config.get('wikibase', 'protocol'),
         }[code]
 
     def globes(self, code):

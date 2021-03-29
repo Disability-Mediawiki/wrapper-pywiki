@@ -13,11 +13,16 @@ class IdSparql:
 
     def load(self):
         sparql = SPARQLWrapper(self.endpoint)
+        # query = """
+        #             select ?item ?id where {
+        #                 ?item <https://linkedopendata.eu/prop/direct/""" + self.item_identifier + """> ?id
+        #             }
+        #         """
         query = """
-                    select ?item ?id where {
-                        ?item <https://linkedopendata.eu/prop/direct/""" + self.item_identifier + """> ?id
-                    }
-                """
+            select ?item ?id where {
+                ?item <http://wikibase.svc/prop/direct/""" + self.item_identifier + """> ?id
+            }
+        """
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()
@@ -26,11 +31,16 @@ class IdSparql:
             id = split[len(split)-1]
             if id.startswith('Q'):
                 self.mapEntity[result['id']['value']] = id
+        # query = """
+        #                     select ?item ?id where {
+        #                         ?item <https://linkedopendata.eu/prop/direct/""" + self.property_identifier + """> ?id
+        #                     }
+        #                 """
         query = """
-                            select ?item ?id where {
-                                ?item <https://linkedopendata.eu/prop/direct/""" + self.property_identifier + """> ?id
-                            }
-                        """
+                    select ?item ?id where {
+                        ?item <http://wikibase.svc/prop/direct/""" + self.property_identifier + """> ?id
+                    }
+                """
         sparql.setQuery(query)
         sparql.setReturnFormat(JSON)
         results = sparql.query().convert()

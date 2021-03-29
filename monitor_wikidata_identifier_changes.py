@@ -59,7 +59,7 @@ class MonitorChanges:
                     print("Entity "+item_id+" has a new link to wikidata id "+wikidata_qid+" importing it ... ")
                     wikidata_item = pywikibot.ItemPage(self.wikidata_repo, wikidata_qid)
                     wikidata_item.get()
-                    self.wikibase_importer.change_item(wikidata_item, self.wikibase_repo, True)
+                    self.wikibase_importer.change_item_V2(wikidata_item,  True, item)
                 else:
                     return
 

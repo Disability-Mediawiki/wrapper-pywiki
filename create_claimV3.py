@@ -1,21 +1,19 @@
 # coding=utf-8
-import sys, os, traceback
-import csv
-import pywikibot
-from pywikibot import config2
-from datetime import datetime
-import requests
-import json
-import csv
-from IdSparql import IdSparql
-from SPARQLWrapper import SPARQLWrapper, JSON
-import time
-from Enum.PropertyDatatypeEnum import PropertyDataType
-from pywikibot.data import api
 # application config
 import configparser
+import csv
+import os
 import re
+import sys
+import traceback
+
+import pywikibot
+from SPARQLWrapper import SPARQLWrapper, JSON
+from pywikibot import config2
+from util.util import WikibaseImporter
+from Enum.PropertyDatatypeEnum import PropertyDataType
 from logger import DebugLogger
+
 """
 THIS CLASS HELPS TO CREATE CLAIMS WITH EXISTING ITEMS AND PROPERTIES
 """
@@ -47,7 +45,7 @@ class CreateClaim:
         self.wikibase=wikibase
         self.wikibase_repo=wikibase.data_repository()
         self.wikidata_repo = wikidata.data_repository()
-
+        self.wikibase_importer = WikibaseImporter(self.wikibase_repo,self.wikidata_repo)
 
     # Searches a concept based on its label with a API call
     def searchWikiItem(self, label):
@@ -177,12 +175,12 @@ class CreateClaim:
 
 
     # import an item
-    from util.util import changeItem, changeProperty, importProperty
-    def importWikiDataConcept(self, qid):
-        arg = qid
-        wikidata_item = pywikibot.ItemPage(self.wikidata_repo, arg)
+    def importWikiDataConcept(self, wd_qid, wb_qid):
+        wikidata_item = pywikibot.ItemPage(self.wikidata_repo, wd_qid)
         wikidata_item.get()
-        wikibase_item = self.changeItem(wikidata_item, self.wikibase_repo, True)
+        wikibase_item = pywikibot.ItemPage(self.wikibase_repo, wb_qid)
+        wikibase_item.get()
+        self.wikibase_importer.change_item_V2(wikidata_item, True, wikibase_item)
         return wikibase_item;
 
     def linkWikidataItem(self, subject, qid):
@@ -195,7 +193,7 @@ class CreateClaim:
             wikidata_item.get()
         else:
             # IMPORT THE WIKIDATA ITEM TO WIKIBASE
-            wikidata_item = self.importWikiDataConcept(qid)
+            wikidata_item = self.importWikiDataConcept(qid,subject.id)
         property_result = self.getWikiItemSparql('Has wikidata substitute item')
         property_id = property_result['results']['bindings'][0]['s']['value'].split("/")[-1]
         property = pywikibot.PropertyPage(self.wikibase_repo, property_id)
