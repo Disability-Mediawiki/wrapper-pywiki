@@ -21,14 +21,14 @@ THIS CLASS HELPS TO CREATE CLAIMS WITH EXISTING ITEMS AND PROPERTIES
 config = configparser.ConfigParser()
 config.read('config/application.config.ini')
 
-family = 'my'
-mylang = 'my'
-familyfile = os.path.relpath("./config/my_family.py")
-if not os.path.isfile(familyfile):
-    print("family file %s is missing" % (familyfile))
-config2.register_family_file(family, familyfile)
-config2.password_file = "user-password.py"
-config2.usernames['my']['my'] = config.get('wikibase', 'user')
+# family = 'my'
+# mylang = 'my'
+# familyfile = os.path.relpath("./config/my_family.py")
+# if not os.path.isfile(familyfile):
+#     print("family file %s is missing" % (familyfile))
+# config2.register_family_file(family, familyfile)
+# config2.password_file = "user-password.py"
+# config2.usernames['my']['my'] = config.get('wikibase', 'user')
 
 # connect to the wikibase
 wikibase = pywikibot.Site("my", "my")
