@@ -46,6 +46,7 @@ class CreateClaim:
         self.wikibase_repo=wikibase.data_repository()
         self.wikidata_repo = wikidata.data_repository()
         self.wikibase_importer = WikibaseImporter(self.wikibase_repo,self.wikidata_repo)
+        # self.wikibase_importer = None
 
     # Searches a concept based on its label with a API call
     def searchWikiItem(self, label):
@@ -439,7 +440,8 @@ class CreateClaim:
 
 def start():
     createClaim = CreateClaim(wikibase,wikidata, sparql)
-    createClaim.read_file_and_process('data/TripletPrepared.csv')
+    # createClaim.read_file_and_process('data/TripletPrepared.csv')
+    createClaim.read_file_and_process('data/last version/TripletPreparedByProgram.csv')
 
 
 

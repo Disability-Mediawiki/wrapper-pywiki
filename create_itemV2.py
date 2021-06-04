@@ -114,6 +114,34 @@ class Create_item:
             data['descriptions'] = description
             new_item = pywikibot.ItemPage(self.wikibase_repo)
             new_item.editEntity(data)
+
+            # INSTANCE OF CLAIM
+            if "Crpd article" in key:
+                document_class_entity = pywikibot.ItemPage(
+                    self.wikibase_repo, 'Q1')
+                document_class_entity.get()
+                instance_of_property = pywikibot.PropertyPage(
+                    self.wikibase_repo, 'P29')
+                instance_of_property.get()
+                instance_claim = pywikibot.Claim(
+                    self.wikibase_repo, instance_of_property.id, datatype=instance_of_property.type)
+                instance_claim.setTarget(document_class_entity)
+                new_item.addClaim(
+                    instance_claim, summary=u'Adding claim to CRPD Article')
+            else:
+                topic_class_entity = pywikibot.ItemPage(
+                    self.wikibase_repo, 'Q2')
+                topic_class_entity.get()
+                instance_of_property = pywikibot.PropertyPage(
+                    self.wikibase_repo, 'P29')
+                instance_of_property.get()
+                instance_claim = pywikibot.Claim(
+                    self.wikibase_repo, instance_of_property.id, datatype=instance_of_property.type)
+                instance_claim.setTarget(topic_class_entity)
+                new_item.addClaim(
+                    instance_claim, summary=u'Adding claim to Topic item')
+
+
             entity_list[self.capitaliseFirstLetter(key.rstrip())] = new_item.getID()
             return entity_list
         else:
@@ -170,11 +198,20 @@ class Create_item:
                         logger.logError('CREATE_ITEM',e, exc_type, exc_obj, exc_tb, tb, err_msg)
                     line_count += 1
 
+    def test(self):
+        data = {}
+        data['labels'] = {'en': 'TestITEM FROM FLASK',
+                          'fr': 'item test france'}
+        data['descriptions'] = {'en': 'TestITEM FROM FLASK'}
+        new_item = pywikibot.ItemPage(self.wikibase_repo,"Q23")
+        new_item.editEntity(data)
+        print(new_item.id)
 
 
 def start():
     create_item=Create_item(wikibase)
     create_item.readFileAndProcess('data/Concepts.csv')
+    # create_item.test()
 
 start()
 exit()

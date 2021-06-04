@@ -1,17 +1,18 @@
 # coding=utf-8
-import sys, os, traceback
-import csv
-import pywikibot
-from pywikibot import config2
-from datetime import datetime
-import requests
-import json
-import csv
-from IdSparql import IdSparql
-from SPARQLWrapper import SPARQLWrapper, JSON
-from logger import DebugLogger
 # application config
 import configparser
+import csv
+import json
+import os
+import sys
+import traceback
+
+import pywikibot
+from SPARQLWrapper import SPARQLWrapper, JSON
+from pywikibot import config2
+
+from logger import DebugLogger
+
 appConfig = configparser.ConfigParser()
 appConfig.read('config/application.config.ini')
 
