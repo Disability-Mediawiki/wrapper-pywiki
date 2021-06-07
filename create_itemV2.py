@@ -135,7 +135,7 @@ class Create_item:
         isExistAPI = self.searchWikiItem(self.capitaliseFirstLetter(key.rstrip()))
         if (len(entity['results']['bindings']) == 0 and not isExistAPI):
             data = {}
-            print(f"inserting concept {key.rstrip()} ")
+            print(f"inserting concept {key.rstrip()}")
             data['labels'] = label
             data['descriptions'] = description
             new_item = pywikibot.ItemPage(self.wikibase_repo)
