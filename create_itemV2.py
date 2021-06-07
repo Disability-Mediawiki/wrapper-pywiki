@@ -275,9 +275,9 @@ class Create_item:
                     line_count += 1
 
 def start():
-    create_item=Create_item(wikibase)
-    create_item.create_class_entity()
-    time.sleep(10)
+    # create_item=Create_item(wikibase)
+    # create_item.create_class_entity()
+    # time.sleep(10)
     create_item.get_class_entity()
     create_item.readFileAndProcess('data/Concepts.csv')
     # create_item.test()
