@@ -117,7 +117,7 @@ class Create_item:
 
 
     def read_language_list(self):
-        filepath = 'util\language_list'
+        filepath = 'util/language_list'
         lang_list=[]
         with open(filepath) as fp:
             line = fp.readline()
@@ -236,13 +236,12 @@ class Create_item:
                 print(f'processing line no {line_count}')
                 if (line_count == 0):
                     line_count += 1
+                    continue
                 else:
                     try:
                         list = self.read_language_list()
                         data = {}
                         print(f"inserting concept {row[1].rstrip()} , count : {line_count}")
-
-
                         labels={}
                         if len(row[1]) >0:
                             label_row = row[1].rstrip().lstrip().split("|")
