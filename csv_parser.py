@@ -11,7 +11,7 @@ class Csv_Parser:
         with open(file_url) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
-            with open('data/last version/TripletPreparedByProgram.csv', 'w', newline='') as myfile:
+            with open('data/last version/TripletPreparedByProgram-bushra.csv', 'w', newline='') as myfile:
                 wr = csv.writer(myfile, delimiter=',')
                 for row in csv_reader:
                     try:
@@ -74,7 +74,7 @@ class Csv_Parser:
 def start():
     csv_Parser = Csv_Parser()
     # csv_Parser.read_file_and_process('data/TripletsClean.csv')
-    csv_Parser.read_file_and_process('data/last version/preparedByDhaya.csv')
+    csv_Parser.read_file_and_process('data/last version/2021.04.12 - Ontology Approach - Bushra.csv')
 
 start()
 exit()

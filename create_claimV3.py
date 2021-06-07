@@ -270,7 +270,7 @@ class CreateClaim:
         # CREATE CLAIM AND EDIT SUBJECT ENTITY
         # "CHECK IF ALREADY CLAIM EXIT IN CREATED CLAIMS"
         if (claims_hash is not None and len(claims_hash) > 0):
-            if (claims_hash.get(subject_item.id) is not None and claims_hash.get(subject_item.id).get(
+            if (claims_hash.get(subject_item.id,None) is not None and claims_hash.get(subject_item.id).get(
                     property_item.id) is not None):
                 existing_target = claims_hash[subject_item.id][property_item.id]
                 if (existing_target is not None):
@@ -374,7 +374,7 @@ class CreateClaim:
         qualifier.setTarget(object_item)
         if(claim_hash is not None):
             created_qualifiers=claim_hash.get(item.id,{}).get(claim.id,{}).get( 'qualifier',None);
-            if created_qualifiers is not None:
+            if not not created_qualifiers and created_qualifiers is not None :
                 if property_id in created_qualifiers:
                     return None;
         if not claim.has_qualifier(property_id,object_item):
@@ -391,11 +391,18 @@ class CreateClaim:
             csv_reader = csv.reader(csv_file, delimiter=',')
             line_count = 0
             for row in csv_reader:
+                if (line_count == 0):
+                    line_count += 1
+                    continue
+
                 if (row[1] == None or row[2] == None or row[3] == None):
                     line_count += 1
                     continue
-                if (line_count == 0):
+
+                if(line_count<4):
                     line_count += 1
+                    continue
+
                 else:
                     # CREATE CLAIM AND EDIT SUBJECT ENTITY
                     try:
@@ -422,7 +429,7 @@ class CreateClaim:
                         tb = traceback.extract_tb(exc_tb)[-1]
                         print(f"ERROR >>>: + {exc_type} , {tb[2]} , {tb[1]}")
                         print(f"ERROR : inserting claim. Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}")
-                        err_msg = f"ERROR : CREATE_CLAIM_V2.:{type(self).__name__} Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}"
+                        err_msg = f"ERROR : CREATE_CLAIM_V3.:{type(self).__name__} Concept : {row[1].rstrip()} ,>> Property : {row[2].rstrip()}  row count : {line_count}, MESSSAGE >> {e}"
                         exc_type, exc_obj, exc_tb = sys.exc_info()
                         tb = traceback.extract_tb(exc_tb)[-1]
                         err_trace = f"ERROR_TRACE >>>: + {exc_type} , method: {tb[2]} , line-no: {tb[1]}"
@@ -442,6 +449,7 @@ def start():
     createClaim = CreateClaim(wikibase,wikidata, sparql)
     # createClaim.read_file_and_process('data/TripletPrepared.csv')
     createClaim.read_file_and_process('data/last version/TripletPreparedByProgram.csv')
+    createClaim.read_file_and_process('data/last version/TripletPreparedByProgram-bushra2.csv')
 
 
 

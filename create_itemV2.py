@@ -4,7 +4,7 @@ import configparser
 import csv
 import sys
 import traceback
-
+import time
 import pywikibot
 from SPARQLWrapper import SPARQLWrapper, JSON
 
@@ -20,6 +20,32 @@ class Create_item:
         self.wikibase=wikibase
         self.wikibase_repo = wikibase.data_repository()
         self.sparql= SPARQLWrapper(config.get('wikibase', 'sparqlEndPoint'))
+        self.class_entities={}
+        self.properties={}
+
+
+    def get_class_entity(self):
+        labels=["Document", "Topic", "Wikidata","Disability rights wiki"]
+        for label in labels:
+            object_result = self.getWikiItemSparql(self.capitaliseFirstLetter(label).rstrip())
+            if (len(object_result['results']['bindings']) > 0):
+                object_uri = object_result['results']['bindings'][0]['s']['value']
+                object_id = object_uri.split("/")[-1]
+                object_item = pywikibot.ItemPage(self.wikibase_repo, object_id)
+                object_item.get();
+                self.class_entities[label]=object_item
+
+        property_result = self.getWikiItemSparql("instance of".rstrip().lstrip().lower())
+        property_item = {}
+        property_id = None
+        if (len(property_result['results']['bindings']) > 0):
+            property_uri = property_result['results']['bindings'][0]['s']['value']
+            # property_id=property_uri.rsplit('/', 1)[-1]
+            property_id = property_uri.split("/")[-1]
+            property_item = pywikibot.PropertyPage(self.wikibase_repo, property_id)
+            property_item.get();
+            self.properties["instance of"]= property_item
+
 
 
     # Searches a concept based on its label with a API call
@@ -118,22 +144,28 @@ class Create_item:
             # INSTANCE OF CLAIM
             if "Crpd article" in key:
                 document_class_entity = pywikibot.ItemPage(
-                    self.wikibase_repo, 'Q1')
+                    self.wikibase_repo, self.class_entities['Document'].id)
                 document_class_entity.get()
                 instance_of_property = pywikibot.PropertyPage(
-                    self.wikibase_repo, 'P29')
+                    self.wikibase_repo, self.properties["instance of"].id)
                 instance_of_property.get()
                 instance_claim = pywikibot.Claim(
                     self.wikibase_repo, instance_of_property.id, datatype=instance_of_property.type)
                 instance_claim.setTarget(document_class_entity)
                 new_item.addClaim(
                     instance_claim, summary=u'Adding claim to CRPD Article')
+
+            #     ADD ALISAES
+                aliases_data = {
+                       'aliases': {'en': ['crpd document', 'crpd', 'CRPD'], 'fr': ['crpd']},
+                     }
+                new_item.editEntity(aliases_data, summary='Edit item')
             else:
                 topic_class_entity = pywikibot.ItemPage(
-                    self.wikibase_repo, 'Q2')
+                    self.wikibase_repo, self.class_entities['Topic'].id)
                 topic_class_entity.get()
                 instance_of_property = pywikibot.PropertyPage(
-                    self.wikibase_repo, 'P29')
+                    self.wikibase_repo, self.properties["instance of"].id)
                 instance_of_property.get()
                 instance_claim = pywikibot.Claim(
                     self.wikibase_repo, instance_of_property.id, datatype=instance_of_property.type)
@@ -149,6 +181,49 @@ class Create_item:
             entity_list[self.capitaliseFirstLetter(key.rstrip())] = entity['results']['bindings'][0]['s']['value'].split("/")[
                 -1]
             return entity_list
+
+    def create_class_entity(self):
+        document_class = pywikibot.ItemPage(self.wikibase_repo)
+        doc_data = {'labels': {'en': 'Document', 'fr':'Document'},
+                'descriptions': {'en': 'preserved information', 'fr':"porteur d'information qui contient l'écriture"},
+                'aliases': {'en': ['doc','record','documents','docs','records'], 'fr': ["pièce d'archives","documents","pièces d'archives"]}}
+        document_class.editEntity(doc_data, summary='Edit document')
+
+        topic_class = pywikibot.ItemPage(self.wikibase_repo)
+        topic_data = {'labels': {'en': 'Topic', 'fr': 'Thème'},
+                'descriptions': {'en': 'in linguistics, the known information in a phrase', 'fr': "l'information connue dans une phrase"},
+                'aliases': {'en': ['Subject','Topics','topic','tags','tag','theeme','sub topic', 'sub topics'],
+                            'fr': ["tags", "tag", "sub topic"]}}
+        topic_class.editEntity(topic_data, summary='Edit document')
+
+        wikidata_class = pywikibot.ItemPage(self.wikibase_repo)
+        wikidata_data = {'labels': {'en': 'Wikidata', 'fr': 'Wikidata'},
+                      'descriptions': {'en': 'free knowledge database project hosted by the Wikimedia Foundation and edited by volunteers',
+                                       'fr': "projet de base de données éditée de manière collaborative"},
+                      'aliases': {
+                          'en': ['WD', 'wikidata.org', 'www.wikidata.org', 'wikidatawiki', 'd:'],
+                          'fr': ['WD', 'wikidata.org', 'www.wikidata.org', 'wikidatawiki', 'd:']}}
+        wikidata_class.editEntity(wikidata_data, summary='Edit document')
+
+        dis_wiki_class = pywikibot.ItemPage(self.wikibase_repo)
+        dis_wiki_data = {'labels': {'en': 'Disability rights wiki', 'fr': 'Disability rights wiki'},
+                      'descriptions': {'en': 'Free knowledge graph project by York university , University Jean Monnet and QA Company',
+                                       'fr': "Projet gratuit de graphe de connaissances par l'université de York, l'université Jean Monnet et QA Company"},
+                      'aliases': {
+                          'en': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata'],
+                          'fr': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata']}}
+        dis_wiki_class.editEntity(dis_wiki_data, summary='Edit document')
+
+        instance_of_property_data = {'labels': {'en': 'instance of', 'fr': "nature de l'élément"},
+                         'descriptions': {
+                             'en': 'relation of type constraints',
+                             'fr': "relation de contrainte de type"},
+                         'aliases': {
+                             'en': ['is a', 'is an', 'is a particular', 'has type',
+                                    'is an individual', 'is a unique','member of','has class'],
+                             'fr': ['instance de', 'is a']}}
+        instance_of_property = pywikibot.PropertyPage(self.wikibase_repo, datatype='wikibase-item')
+        instance_of_property.editEntity(instance_of_property_data)
 
 
     def readFileAndProcess(self,filePath):
@@ -173,11 +248,12 @@ class Create_item:
                             label_row = row[1].rstrip().lstrip().split("|")
                             for label in label_row:
                                 language=label.rstrip().lstrip().split("-")[0].rstrip().lstrip().replace("/n","")
-                                value=label.rstrip().lstrip().split("-")[1].rstrip().lstrip().replace("/n","")
+                                value=label.rstrip().lstrip().split("-")[1].rstrip().lstrip().capitalize().replace("/n","")
                                 if language in list:
                                     labels[language]=value
                         else:
-                            labels = {"en": self.capitaliseFirstLetter(row[0].rstrip().lstrip())}
+                            labels = {"en": row[0].rstrip().lstrip().capitalize().replace("/n","")}
+
                         if len(row[2]) > 0:
                             description_row = row[2].rstrip().lstrip().split("|")
                             descriptions = {}
@@ -198,18 +274,11 @@ class Create_item:
                         logger.logError('CREATE_ITEM',e, exc_type, exc_obj, exc_tb, tb, err_msg)
                     line_count += 1
 
-    def test(self):
-        data = {}
-        data['labels'] = {'en': 'TestITEM FROM FLASK',
-                          'fr': 'item test france'}
-        data['descriptions'] = {'en': 'TestITEM FROM FLASK'}
-        new_item = pywikibot.ItemPage(self.wikibase_repo,"Q23")
-        new_item.editEntity(data)
-        print(new_item.id)
-
-
 def start():
     create_item=Create_item(wikibase)
+    create_item.create_class_entity()
+    time.sleep(10)
+    create_item.get_class_entity()
     create_item.readFileAndProcess('data/Concepts.csv')
     # create_item.test()
 
