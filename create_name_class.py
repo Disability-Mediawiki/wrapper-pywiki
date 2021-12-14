@@ -23,6 +23,17 @@ class Create_item:
         self.sparql = SPARQLWrapper(config.get('wikibase', 'sparqlEndPoint'))
 
     def create_class_entity(self):
+        dis_wiki_class = pywikibot.ItemPage(self.wikibase_repo)
+        dis_wiki_data = {'labels': {'en': 'Disability rights wiki', 'fr': 'Disability rights wiki'},
+                         'descriptions': {'en': 'Free knowledge graph project by York university , University Jean Monnet and QA Company',
+                                          'fr': "Projet gratuit de graphe de connaissances par l'université de York, l'université Jean Monnet et QA Company"},
+                         'aliases': {
+            'en': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata'],
+            'fr': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata']}}
+        dis_wiki_class.editEntity(dis_wiki_data, summary='Edit document')
+        
+        # UNCOMMENT REQUIRED ENTITY CREATION IF NOT ALREADY CREATED##############
+        
         document_class = pywikibot.ItemPage(self.wikibase_repo)
         doc_data = {'labels': {'en': 'Document', 'fr': 'Document'},
                     'descriptions': {'en': 'preserved information', 'fr': "porteur d'information qui contient l'écriture"},
@@ -64,27 +75,17 @@ class Create_item:
             'fr': ['WD', 'wikidata.org', 'www.wikidata.org', 'wikidatawiki', 'd:']}}
         wikidata_class.editEntity(wikidata_data, summary='Edit document')
 
-        dis_wiki_class = pywikibot.ItemPage(self.wikibase_repo)
-        dis_wiki_data = {'labels': {'en': 'Disability rights wiki', 'fr': 'Disability rights wiki'},
-                         'descriptions': {'en': 'Free knowledge graph project by York university , University Jean Monnet and QA Company',
-                                          'fr': "Projet gratuit de graphe de connaissances par l'université de York, l'université Jean Monnet et QA Company"},
-                         'aliases': {
-            'en': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata'],
-            'fr': ['Diswiki', 'disability wiki', 'wiki disability', 'wiki rights', 'disability wiki rights', 'diswikidata']}}
-        dis_wiki_class.editEntity(dis_wiki_data, summary='Edit document')
-
-        # UNCOMMENT IF NOT ALREADY CREATED
-        # instance_of_property_data = {'labels': {'en': 'instance of', 'fr': "nature de l'élément"},
-        #                              'descriptions': {
-        #     'en': 'relation of type constraints',
-        #     'fr': "relation de contrainte de type"},
-        #     'aliases': {
-        #     'en': ['is a', 'is an', 'is a particular', 'has type',
-        #                             'is an individual', 'is a unique', 'member of', 'has class'],
-        #     'fr': ['instance de', 'is a']}}
-        # instance_of_property = pywikibot.PropertyPage(
-        #     self.wikibase_repo, datatype='wikibase-item')
-        # instance_of_property.editEntity(instance_of_property_data)
+        instance_of_property_data = {'labels': {'en': 'instance of', 'fr': "nature de l'élément"},
+                                     'descriptions': {
+            'en': 'relation of type constraints',
+            'fr': "relation de contrainte de type"},
+            'aliases': {
+            'en': ['is a', 'is an', 'is a particular', 'has type',
+                                    'is an individual', 'is a unique', 'member of', 'has class'],
+            'fr': ['instance de', 'is a']}}
+        instance_of_property = pywikibot.PropertyPage(
+            self.wikibase_repo, datatype='wikibase-item')
+        instance_of_property.editEntity(instance_of_property_data)
 
         document_reference_uri_data = {'labels': {'en': 'document reference link', 'fr': "document link"},
                                        'descriptions': {

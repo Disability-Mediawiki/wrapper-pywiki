@@ -260,7 +260,7 @@ class Create_item:
 def start():
     create_item = Create_item(wikibase)
     create_item.get_class_entity()
-    # create_item.readFileAndProcess('data/Concepts.csv')
+    create_item.readFileAndProcess('data/Concepts.csv')
 
 
 start()
